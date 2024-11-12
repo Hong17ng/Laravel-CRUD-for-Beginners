@@ -17,18 +17,27 @@ class ProductController extends Controller
         return view('products.create');
     }
 
-    public function store(Request $request){
-        $data = $request->validate([
-            'name' => 'required',
-            'qty' => 'required|numeric',
-            'price' => 'required|decimal:0,2',
-            'description' => 'nullable'
-        ]);
+    public function store(Request $request)
+    {
+    $request->validate([
+        'name' => 'required',
+        'qty' => 'required|integer',
+        'price' => 'required|numeric',
+        'description' => 'nullable|string',
+        'attachment' => 'nullable|file|mimes:jpg,png,pdf,doc,docx|max:2048',
+    ]);
 
-        $newProduct = Product::create($data);
+    $productData = $request->only(['name', 'qty', 'price', 'description']);
 
-        return redirect(route('product.index'));
+    // Handle file upload
+    if ($request->hasFile('attachment')) {
+        $filePath = $request->file('attachment')->store('attachments', 'public');
+        $productData['attachment'] = $filePath;
+    }
 
+    Product::create($productData);
+
+    return redirect()->route('product.index')->with('success', 'Product created successfully.');
     }
 
     public function edit(Product $product){
@@ -36,16 +45,27 @@ class ProductController extends Controller
     }
 
     public function update(Product $product, Request $request){
-        $data = $request->validate([
+        
+        $request->validate([
             'name' => 'required',
-            'qty' => 'required|numeric',
-            'price' => 'required|decimal:0,2',
-            'description' => 'nullable'
+            'qty' => 'required|integer',
+            'price' => 'required|numeric',
+            'description' => 'nullable|string',
+            'attachment' => 'nullable|file|mimes:jpg,png,pdf,doc,docx|max:2048',
         ]);
-
-        $product->update($data);
-
-        return redirect(route('product.index'))->with('success', 'Product Updated Succesffully');
+    
+        $productData = $request->only(['name', 'qty', 'price', 'description']);
+    
+        // Handle file upload
+        if ($request->hasFile('attachment')) {
+            $filePath = $request->file('attachment')->store('attachments', 'public');
+            $productData['attachment'] = $filePath;
+        }
+    
+        $product->update($productData);
+        
+    
+        return redirect()->route('product.index')->with('success', 'Product Updated successfully.');
 
     }
 
